@@ -1,0 +1,33 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    "sourceMap": true,
+    "declaration": false,
+    "strictPropertyInitialization": false,
+
+    "strict": true,
+    "noEmitOnError": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/utils/*": ["src/utils/*"],
+      "@packages/*": ["src/packages/*"]
+    },
+
+    "lib": ["es2021"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
+}
