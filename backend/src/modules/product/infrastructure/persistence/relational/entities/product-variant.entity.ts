@@ -5,10 +5,12 @@ import {
   PrimaryGeneratedColumn,
   Unique,
   JoinColumn,
+  OneToMany
 } from 'typeorm';
-import { ProductVariant } from '../../../../../../packages/domins';
+import { OrderItem, ProductVariant } from '../../../../../../packages/domins';
 import { EntityRelationalHelper } from '../../../../../../utils/relational-entity-helper';
 import { ProductEntity } from '@/modules/product/infrastructure/persistence/relational/entities/product.entity';
+import { OrderItemEntity } from '@/modules/order/infrastructure/persistence/relational/entities/order-item.entity';
 
 @Entity({ name: 'product_variants' })
 @Unique(['product', 'size', 'color'])
@@ -17,10 +19,24 @@ export class ProductVariantEntity
   implements ProductVariant
 {
   @PrimaryGeneratedColumn()
-  id: number;
+  product_variant_id: number;
 
   @Column()
   product_id:number
+
+
+  @Column({ length: 64, default: '' ,nullable:true})
+  size: string;
+
+  @Column({ length: 64, default: '' ,nullable:true})
+  color: string; 
+
+
+  @OneToMany(() => OrderItemEntity, (oi) => oi.variant, {
+    cascade: true,
+  })
+  order_item: OrderItemEntity[];
+
 
   @ManyToOne(() => ProductEntity, (p) => p.variants, {
     onDelete: 'CASCADE',
@@ -29,15 +45,5 @@ export class ProductVariantEntity
   @JoinColumn({ name: 'product_id' })
   product: ProductEntity;
 
-  @Column({ length: 64, default: '' })
-  size: string; // e.g., S, M, L, 42
 
-  @Column({ length: 64, default: '' })
-  color: string; // normalized uppercase
-
-  @Column('decimal', { precision: 12, scale: 2, default: 0 })
-  unitPrice: string;
-
-  @Column({ length: 8, default: 'USD' })
-  currency: string;
 }

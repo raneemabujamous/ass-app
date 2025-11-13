@@ -15,4 +15,6 @@ export abstract class CustomerRepository {
 
 
   
+  abstract getCustomerById(id:number): Promise<Customer>
+
 }

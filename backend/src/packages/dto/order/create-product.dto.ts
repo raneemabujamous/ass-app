@@ -1,6 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ArrayNotEmpty, IsArray, IsString, Length, ValidateNested } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsNumber, IsString, Length, ValidateNested } from 'class-validator';
 import {CreateVariantDto } from './create-variant.dto';
 
 import { IsNotEmpty, IsOptional } from 'class-validator';
@@ -15,6 +15,11 @@ export class CreateProductDto {
   @IsString()
   @Length(1, 255)
   name: string;
+
+  @ApiProperty()
+  @IsNumber()
+  price: number;
+
 
 
 

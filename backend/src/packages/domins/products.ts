@@ -10,11 +10,13 @@ export class Product {
 
 
   name: string;
+
+  price : number
 }
 
 export class ProductVariant {
 
-  id: number;
+  product_variant_id: number;
 
 
   product_id: number;
@@ -24,10 +26,4 @@ export class ProductVariant {
 
 
   color: string;  // e.g., "BLACK"
-
-
-  unitPrice: string; // decimal(12,2) as string
-
-
-  currency: string;  // e.g., "USD"
 }

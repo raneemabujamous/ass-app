@@ -9,11 +9,14 @@ import {
     UsePipes,
     ValidationPipe,
   } from '@nestjs/common';
+  import { ApiBearerAuth, ApiTags, ApiParam } from '@nestjs/swagger';
+
   import { ProductsService } from './product.service';
   import { CreateProductDto } from '@/packages/dto/order/create-product.dto';
   import { CreateVariantDto } from '@/packages/dto/order/create-variant.dto'
   import {ListProductsQuery} from '@/packages/dto/order/list-products.query'
-  @Controller('products')
+  @ApiTags('products')@
+  Controller('products')
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   export class ProductsController {
     constructor(private readonly service: ProductsService) {}
@@ -21,26 +24,20 @@ import {
     @Post()
     async create(@Body() dto: CreateProductDto) {
       const product = await this.service.create(dto);
-      return product; // already domain-shaped
+      return product; 
     }
 
     @Get()
-    async list(@Query() q: ListProductsQuery) {
-      return this.service.list(q);
+    async getAllProduct() {
+      return this.service.getAllProduct();
     }
 
     @Post(':id/variants')
     async addVariant(
       @Param('id', ParseIntPipe) id: number,
-      @Body()
-      body: {
-        size: string;
-        color: string;
-        unitPrice: string;
-        currency: string;
-      },
+      @Body() createVariantDto :CreateVariantDto,
     ) {
-      return this.service.addVariant(id, body);
+      return this.service.addVariant(id, createVariantDto);
     }
   }
   

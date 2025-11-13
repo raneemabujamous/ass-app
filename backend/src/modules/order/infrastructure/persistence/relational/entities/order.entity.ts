@@ -17,24 +17,16 @@ export class OrderEntity extends EntityRelationalHelper implements Order {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => CustomerEntity, (c) => c.orders, {
-    onDelete: 'SET NULL',
-    eager: true,
-  })
-  @JoinColumn({ name: 'customer_id' })
-  customer: CustomerEntity;
+
+  @Column()
+  customer_id:number 
+
 
   @CreateDateColumn({ type: 'timestamptz', name: 'order_datetime' })
-  orderDatetime: Date;
+  order_datetime: Date;
 
   @Column({ length: 8, default: 'USD' })
   currency: string;
-
-  @Column('decimal', { precision: 12, scale: 2, default: 0 })
-  subtotal: string;
-
-  @Column('decimal', { precision: 12, scale: 2, default: 0 })
-  taxAmount: string;
 
   @Column('decimal', { precision: 12, scale: 2, default: 0 })
   total: string;
@@ -44,4 +36,19 @@ export class OrderEntity extends EntityRelationalHelper implements Order {
     eager: true,
   })
   items: OrderItemEntity[];
+
+
+@ManyToOne(
+  () => CustomerEntity,
+  (c) => c.orders,
+  {
+    cascade: true,
+    onDelete: 'CASCADE',
+  }
+)
+@JoinColumn({
+  name: 'customer_id',
+  referencedColumnName: 'id',
+})
+customer: CustomerEntity;
 }

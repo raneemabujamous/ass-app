@@ -6,6 +6,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { ProductsModule } from '@/modules/product/product.module';
 import { OrdersModule } from './modules/order/order.module';
 import { CustomerModule } from '@/modules/customer/customer.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -30,6 +31,7 @@ import { CustomerModule } from '@/modules/customer/customer.module';
     OrdersModule,
     CustomerModule,
     ProductsModule,
+    DashboardModule
   ],
 })
 export class AppModule {}

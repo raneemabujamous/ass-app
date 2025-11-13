@@ -11,15 +11,15 @@ import{CustomerEntity} from '../entities/customer.entity'
 export class CustomersRelationalRepository implements CustomerRepository {
   constructor(
     @InjectRepository(CustomerEntity)
-    private readonly organizationRepository: Repository<CustomerEntity>
+    private readonly customerRepository: Repository<CustomerEntity>
 
 
   ) {}
 
   async createCustomer(data: Customer): Promise<Customer> {
     const persistenceModel = CustomerMapper.toPersistence(data); // CustomerEntity
-    const newEntity = await this.organizationRepository.save(
-      this.organizationRepository.create(persistenceModel)
+    const newEntity = await this.customerRepository.save(
+      this.customerRepository.create(persistenceModel)
     );
     return CustomerMapper.toDomain(newEntity); // returns Customer
   
@@ -27,15 +27,14 @@ export class CustomersRelationalRepository implements CustomerRepository {
 
 
   async getCustomerById(customerId: number): Promise<Customer> {
-    const entity = await this.organizationRepository.findOneBy({ id: customerId });
+    const entity = await this.customerRepository.findOneBy({ id: customerId });
     if (!entity) throw new Error('Customer not found');
     return CustomerMapper.toDomain(entity);
   }
 
   async getAllOrg(): Promise<Customer[]> {
-    return this.organizationRepository.find();  }
+    return this.customerRepository.find();  }
 
-
-
+ 
 
 }

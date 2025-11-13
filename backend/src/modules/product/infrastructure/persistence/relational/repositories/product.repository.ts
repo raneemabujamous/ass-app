@@ -10,7 +10,7 @@ import { ProductRepository } from '../../product.repository';
 import { ProductEntity } from '../entities/product.entity';
 import { ProductVariantEntity } from '../entities/product-variant.entity';
 import { ProductMapper } from '../mappers/product.mapper';
-import { Product } from '@/packages/domins';
+import { Product, ProductVariant } from '@/packages/domins';
 import { CreateProductDto } from '@/packages/dto/order/create-product.dto';
 
 @Injectable()
@@ -24,6 +24,14 @@ export class ProductRelationalRepository implements ProductRepository {
   ) {}
 
   // ---- Transactions
+
+  async getAllProduct() : Promise<any>{
+    const products = await this.productRepo.find({
+      relations: ['variants'], 
+    });
+    return products;
+  }
+
   async transaction<T>(work: (em: EntityManager) => Promise<T>): Promise<T> {
     return this.dataSource.transaction(work);
   }
@@ -48,11 +56,11 @@ export class ProductRelationalRepository implements ProductRepository {
       const entity = em.getRepository(ProductEntity).create({
         sku: dto.sku,
         name: dto.name,
+        price: dto.price,
+
         variants: norm.map((v:any) => em.getRepository(ProductVariantEntity).create({
           size: v.size ?? '',
           color: v.color ?? '',
-          unitPrice: v.unitPrice ?? '0',
-          currency: v.currency ?? 'USD',
         })),
       });
   
@@ -92,12 +100,10 @@ export class ProductRelationalRepository implements ProductRepository {
     productId: number,
     payload: { size: string; color: string; unitPrice: string; currency: string },
   ): Promise<{
-    id: number;
-    productId: number;
+    product_variant_id: number;
+    product_id: number;
     size: string;
     color: string;
-    unitPrice: string;
-    currency: string;
   }> {
     const product = await this.productRepo.findOne({ where: { id: productId } });
     if (!product) throw new NotFoundException('Product not found');
@@ -106,19 +112,15 @@ export class ProductRelationalRepository implements ProductRepository {
       product,
       size: payload.size ?? '',
       color: payload.color?.toUpperCase?.() ?? payload.color ?? '',
-      unitPrice: payload.unitPrice ?? '0',
-      currency: payload.currency ?? 'USD',
     });
 
     try {
       const saved = await this.variantRepo.save(variant);
       return {
-        id: saved.id,
-        productId: productId,
+        product_variant_id:saved.product_variant_id,
+        product_id: productId,
         size: saved.size,
         color: saved.color,
-        unitPrice: saved.unitPrice,
-        currency: saved.currency,
       };
     } catch (e: any) {
       if (e?.code === '23505' || e?.code === 'ER_DUP_ENTRY') {
@@ -127,4 +129,13 @@ export class ProductRelationalRepository implements ProductRepository {
       throw e;
     }
   }
-}
+
+  async findVerId(id:number): Promise<ProductVariant | null>{
+    const product = await this.variantRepo.findOne({ where: { product_variant_id: id } });
+return product
+  }
+
+
+  
+  
+  }   

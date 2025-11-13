@@ -22,47 +22,43 @@ import {
     @Column()
     order_id:number 
 
-    @ManyToOne(() => OrderEntity, (o) => o.items, {
-      onDelete: 'CASCADE',
-      eager: false,
-    })
-    @JoinColumn({ name: 'order_id' })
-    order: OrderEntity;
-  
-    @ManyToOne(() => ProductEntity, {
-      eager: true,
-      onDelete: 'RESTRICT',
-    })
-    @JoinColumn({ name: 'product_id' })
-    product: ProductEntity;
-  
-    @ManyToOne(() => ProductVariantEntity, {
-      eager: true,
-      nullable: true,
-      onDelete: 'SET NULL',
-    })
-    @JoinColumn({ name: 'variant_id' })
-    variant: ProductVariantEntity | null;
-  
+   @Column()
+   product_variant_id :number
+
     @Column('int')
     quantity: number;
   
-    @Column({ name: 'unitPrice', type: 'numeric', precision: 12, scale: 2, nullable: true })
-    unitPrice: string | null;
-      
-    @Column('decimal', { precision: 12, scale: 2, default: 0 })
-    discount: string;
+    @Column({ name: 'total', type: 'numeric', precision: 12, scale: 2, nullable: true })
+    unit_price: string | null;
+
+
   
-    @Column('decimal', { precision: 12, scale: 4, default: 0.1 })
-    taxRate: string; // 0.1000 = 10%
-  
-    @Column('decimal', { precision: 12, scale: 2, nullable: true })
-    lineSubtotal: string;
-  
-    @Column('decimal', { precision: 12, scale: 2 , nullable: true})
-    taxAmount: string;
-  
-    @Column('decimal', { precision: 12, scale: 2 ,nullable: true})
-    lineTotal: string;
+    @ManyToOne(
+      () => ProductVariantEntity,
+      (pv) => pv.order_item,
+      {
+        onDelete: 'CASCADE',
+      }
+    )
+    @JoinColumn({
+      name: 'product_variant_id',
+      referencedColumnName: 'product_variant_id',
+    })
+    variant: ProductVariantEntity;
+
+
+    @ManyToOne(
+      () => OrderEntity,
+      (o) => o.items,
+      {
+        onDelete: 'CASCADE',
+      }
+    )
+    @JoinColumn({
+      name: 'order_id',
+      referencedColumnName: 'id',
+    })
+    order: OrderEntity;
+    
   }
   

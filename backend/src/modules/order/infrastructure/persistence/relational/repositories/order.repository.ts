@@ -30,6 +30,16 @@ export class OrdersRelationalRepository implements OrderRepository {
   
   }
 
+  async createOrderItem(data: OrderItem): Promise<OrderItem> {
+
+    console.log("data::",data)
+    const persistenceModel = OrderItemMapper.toPersistence(data); // OrderEntity
+    const newEntity = await this.orderItemRepo.save(
+      this.orderItemRepo.create(persistenceModel)
+    );
+    return OrderItemMapper.toDomain(newEntity); // returns Order
+  
+  }
 
 
 

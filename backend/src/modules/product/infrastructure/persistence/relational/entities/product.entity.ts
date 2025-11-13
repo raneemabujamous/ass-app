@@ -21,6 +21,9 @@ export class ProductEntity extends EntityRelationalHelper implements Product {
   @Column({ length: 255 })
   name: string;
 
+  @Column('decimal', { precision: 12, scale: 2, default: 0 })
+  price: number;
+
   @OneToMany(() => ProductVariantEntity, (v) => v.product, {
     cascade: true,
   })

@@ -26,23 +26,16 @@ class OrderItemInput {
     
     @ApiProperty({ example: 1, required: false })
     @IsNumber()
-    @IsOptional()
-    variantId?: number;
+    variantId: number;
     }
     
     
     export class CreateOrderDto {
-    @ApiProperty({ example: 'Jane Doe' })
-    @IsString()
-    @Length(1, 255)
-    customerName: string;
+    @ApiProperty({ example: 1})
+    @IsNumber()
+    customerId: number;
     
-    
-    @ApiProperty({ example: 'jane@example.com', required: false })
-    @IsEmail()
-    @IsOptional()
-    customerEmail: string;
-    
+
     
     @ApiProperty({ type: [OrderItemInput] })
     @IsArray()
@@ -51,6 +44,8 @@ class OrderItemInput {
     items: OrderItemInput[];
     
     
+
+
     @ApiProperty({ example: 'USD', required: false })
     @IsString()
     @IsOptional()

@@ -28,82 +28,124 @@ export class DashboardService {
     @InjectRepository(DimCustomerEntity) private readonly custRepo: Repository<DimCustomerEntity>,
   ) {}
 
-  // --------- KPI ---------
   async getKpis(startDate?: string, endDate?: string) {
     const s = parseMaybeDate(startDate);
     const e = parseMaybeDate(endDate);
-
+  
     const qb = this.factRepo.createQueryBuilder('fs')
-      .select('COALESCE(SUM(fs.line_total), 0)', 'total_revenue')
-      .addSelect('COUNT(DISTINCT fs.order_id)', 'total_orders');
-
+      .select('COALESCE(SUM(fs.total), 0)', 'total_revenue')
+      .addSelect('COUNT(DISTINCT fs.order_id)', 'total_orders')
+      .addSelect('COALESCE(SUM(fs.quantity), 0)', 'total_quantity')
+      .addSelect('COUNT(DISTINCT fs.customer_id)', 'unique_customers');
+  
     if (s && e) qb.where('fs.date_key BETWEEN :s AND :e', { s: toDateKey(s), e: toDateKey(e) });
     else if (s) qb.where('fs.date_key >= :s', { s: toDateKey(s) });
     else if (e) qb.where('fs.date_key <= :e', { e: toDateKey(e) });
-
-    const raw = await qb.getRawOne<{ total_revenue: string; total_orders: string }>();
+  
+    const raw = await qb.getRawOne<{
+      total_revenue: string;
+      total_orders: string;
+      total_quantity: string;
+      unique_customers: string;
+    }>();
+  
     const totalRevenue = Number(raw?.total_revenue ?? 0);
     const totalOrders = Number(raw?.total_orders ?? 0);
-    const aov = totalOrders ? +(totalRevenue / totalOrders).toFixed(2) : 0;
-
-    return { total_revenue: totalRevenue, total_orders: totalOrders, average_order_value: aov };
+    const totalQuantity = Number(raw?.total_quantity ?? 0);
+    const uniqueCustomers = Number(raw?.unique_customers ?? 0);
+    const averageOrderValue = totalOrders ? +(totalRevenue / totalOrders).toFixed(2) : 0;
+    const averageQuantityPerOrder = totalOrders ? +(totalQuantity / totalOrders).toFixed(2) : 0;
+    const averageRevenuePerCustomer = uniqueCustomers ? +(totalRevenue / uniqueCustomers).toFixed(2) : 0;
+  
+    return {
+      total_revenue: totalRevenue,
+      total_orders: totalOrders,
+      total_quantity: totalQuantity,
+      unique_customers: uniqueCustomers,
+      average_order_value: averageOrderValue,
+      average_quantity_per_order: averageQuantityPerOrder,
+      average_revenue_per_customer: averageRevenuePerCustomer
+    };
   }
+  
 
   // --------- Revenue over time ---------
-  async revenueOverTime(granularity: 'daily' | 'monthly', startDate?: string, endDate?: string) {
+  async revenueOverTime(
+    granularity: 'daily' | 'monthly',
+    startDate?: string,
+    endDate?: string
+  ) {
     const s = parseMaybeDate(startDate);
     const e = parseMaybeDate(endDate);
-
+  
     const qb = this.factRepo.createQueryBuilder('fs')
       .innerJoin(DimDateEntity, 'dd', 'dd.date_key = fs.date_key');
-
+  
+    // Select and group
     if (granularity === 'daily') {
       qb.select(['dd.year AS year', 'dd.month AS month', 'dd.day AS day'])
-        .addSelect('COALESCE(SUM(fs.line_total), 0)', 'rev')
+        .addSelect('COALESCE(SUM(fs.total), 0)', 'revenue')
         .groupBy('dd.year, dd.month, dd.day')
-        .orderBy('dd.year', 'ASC').addOrderBy('dd.month', 'ASC').addOrderBy('dd.day', 'ASC');
+        .orderBy('dd.year', 'ASC')
+        .addOrderBy('dd.month', 'ASC')
+        .addOrderBy('dd.day', 'ASC');
     } else {
       qb.select(['dd.year AS year', 'dd.month AS month'])
-        .addSelect('COALESCE(SUM(fs.line_total), 0)', 'rev')
+        .addSelect('COALESCE(SUM(fs.total), 0)', 'revenue')
         .groupBy('dd.year, dd.month')
-        .orderBy('dd.year', 'ASC').addOrderBy('dd.month', 'ASC');
+        .orderBy('dd.year', 'ASC')
+        .addOrderBy('dd.month', 'ASC');
     }
-
+  
+    // Date filter
     if (s && e) qb.where('fs.date_key BETWEEN :s AND :e', { s: toDateKey(s), e: toDateKey(e) });
     else if (s) qb.where('fs.date_key >= :s', { s: toDateKey(s) });
     else if (e) qb.where('fs.date_key <= :e', { e: toDateKey(e) });
-
+  
     const rows = await qb.getRawMany<any>();
-    const series = rows.map(r =>
-      granularity === 'daily'
-        ? { period: `${r.year}-${String(r.month).padStart(2,'0')}-${String(r.day).padStart(2,'0')}`, revenue: Number(r.rev) }
-        : { period: `${r.year}-${String(r.month).padStart(2,'0')}`, revenue: Number(r.rev) }
-    );
-
+  
+    // Map to series
+    const series = rows.map(r => ({
+      period: granularity === 'daily'
+        ? `${r.year}-${String(r.month).padStart(2, '0')}-${String(r.day).padStart(2, '0')}`
+        : `${r.year}-${String(r.month).padStart(2, '0')}`,
+      revenue: Number(r.revenue)
+    }));
+  
     return { granularity, series };
   }
+  
 
   // --------- Top products ---------
   async topProducts(limit = 10, startDate?: string, endDate?: string) {
     const s = parseMaybeDate(startDate);
     const e = parseMaybeDate(endDate);
-
+  
     const qb = this.factRepo.createQueryBuilder('fs')
-      .innerJoin(DimProductEntity, 'dp', 'dp.product_id = fs.product_id')
+      .innerJoin(DimProductEntity, 'dp', 'dp.product_id = fs.product_variant_id') // ensure this matches your DW schema
       .select(['dp.product_id AS id', 'dp.name AS name'])
-      .addSelect('COALESCE(SUM(fs.line_total), 0)', 'value')
-      .addSelect('SUM(fs.quantity)', 'count')
+      .addSelect('COALESCE(SUM(fs.total), 0)', 'revenue')
+      .addSelect('COALESCE(SUM(fs.quantity), 0)', 'count')
       .groupBy('dp.product_id, dp.name')
-      .orderBy('value', 'DESC')
+      .orderBy('revenue', 'DESC')
       .limit(limit);
-
+  
+    // Date filter
     if (s && e) qb.where('fs.date_key BETWEEN :s AND :e', { s: toDateKey(s), e: toDateKey(e) });
     else if (s) qb.where('fs.date_key >= :s', { s: toDateKey(s) });
     else if (e) qb.where('fs.date_key <= :e', { e: toDateKey(e) });
-
+  
     const rows = await qb.getRawMany<any>();
-    return { rows: rows.map(r => ({ id: Number(r.id), name: r.name, value: Number(r.value), count: Number(r.count ?? 0) })) };
+    return {
+      rows: rows.map(r => ({
+        id: Number(r.id),
+        name: r.name,
+        revenue: Number(r.revenue),
+        count: Number(r.count)
+      }))
+    };
   }
+  
 
   async top2Products(startDate?: string, endDate?: string) {
     return this.topProducts(2, startDate, endDate);

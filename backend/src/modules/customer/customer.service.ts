@@ -36,6 +36,9 @@ export class CustomersService {
     return this.customerRepository.getAllOrg();
   }
 
-  
+  findOne(id:number): Promise<Customer> {
+    return this.customerRepository.getCustomerById(id);
+  }
+
   
 }

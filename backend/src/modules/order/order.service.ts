@@ -18,6 +18,7 @@ import { Product
 
 import { Customer
 } from '@/packages/domins/customer'
+import { Order } from '@/packages/domins';
 
 @Injectable()
 export class OrdersService {
@@ -30,4 +31,49 @@ private readonly productService: ProductsService
 
 
 
-}
+
+  async createOrder(dto: CreateOrderDto): Promise<any> {
+    const customer = await this.customerService.findOne(
+    Number(dto.customerId) ,
+    );
+    if (!customer) throw new Error('Customer not found');
+    let order =await  this.orderRepository.createOrder({
+      customer_id: customer.id,
+      currency: dto.currency || 'USD',
+      total: '0',
+      order_datetime: new Date(),
+    });
+  
+    let subtotal = 0;
+  
+    // 3️⃣ Add items one by one
+    for (const itemDto of dto.items) {
+      const product = await this.productService.findById(itemDto.productId);
+      if (!product) throw new Error(`Product ${itemDto.productId} not found`);
+  
+      let variant = null;
+      // if (itemDto.variantId) {
+        variant = await this.productService.findVerId( itemDto.variantId );
+      // }
+  console.log("product::",product)
+      const unitPrice = Number( product?.price || 0); // fallback to product.price
+    console.log("variant",variant)
+      const orderItem = await this.orderRepository.createOrderItem({
+        order_id: order.id,
+        product_variant_id: Number(itemDto.variantId),
+        unit_price: unitPrice.toFixed(2),
+        quantity: itemDto.quantity
+      });
+  
+      subtotal += unitPrice;
+    }
+    order.total = subtotal.toFixed(2);
+  
+    await this.orderRepository.update({id :order.id, total: order.total }); // update DB
+
+    return 'sucess create order'
+  }
+  
+  
+ 
+}  

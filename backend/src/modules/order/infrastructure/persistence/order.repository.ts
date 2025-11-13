@@ -7,10 +7,13 @@ import { OrderItem } from '@/packages/domins/order';
 export abstract class OrderRepository {
 
   abstract createOrder(
-    data: Omit<Order, 'project_id' | 'createdAt' | 'deletedAt' | 'updatedAt'>
+    data: Omit<Order, 'id'  | 'createdAt' | 'deletedAt' | 'updatedAt'>
   ): Promise<Order>;
 
 
+  abstract createOrderItem(
+    data: Omit<OrderItem, 'id'  | 'createdAt' | 'deletedAt' | 'updatedAt'>
+  ): Promise<OrderItem>;
 
   
   abstract getOrderById(
